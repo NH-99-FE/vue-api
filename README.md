@@ -34,7 +34,7 @@ npx sequelize-cli db:seed:all
 # 启动项目
 npm start
 ```
-访问地址：http://localhost:3000,详情可查看接口文档
+访问地址：http://localhost:3000, 详情可查看接口文档：https://apifox.com/apidoc/shared-d11bd9fc-2ab9-4e04-bb04-163c8077044f
 
 ## 初始管理员账号信息
 ```text
