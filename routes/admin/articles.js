@@ -32,13 +32,12 @@ router.get('/', async (req,res) => {
         const condition = {
             order: [['id', 'DESC']],
             limit: pageSize,
-            offset
+            offset,
+            where: {}
         }
         if(query.title){
-            condition.where = {
-                title: {
+            condition.where.title = {
                     [Op.like]: `%${query.title}%`
-                }
             }
         }
         const {count, rows} = await Article.findAndCountAll(condition);

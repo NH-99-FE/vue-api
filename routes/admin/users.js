@@ -71,7 +71,23 @@ router.get('/', async (req,res) => {
     }
 })
 
+/**
+ * 查询当前登录的用户详情
+ * GET /admin/users/me
+ */
+router.get('/me', async (req, res) => {
+    try {
+        const user = req.user;
+        success(res, '查询当前用户信息成功', { user });
+    } catch (error) {
+        failure(res, error);
+    }
+})
 
+/**
+ * 查询用户详情
+ * GET /admin/user/:id
+ */
 router.get('/:id', async (req, res) => {
     try {
         const user = await getUser(req)
@@ -107,6 +123,8 @@ router.put('/:id', async (req, res) => {
         failure(res, error);
     }
 })
+
+
 
 // 白名单过滤数据
 const filterBody = (req) => {

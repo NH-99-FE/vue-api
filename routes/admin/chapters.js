@@ -79,7 +79,9 @@ router.post('/', async (req, res) => {
     try {
         // 白名单过滤
         const body = filterBody(req);
+        // 创建章节，并增加课程表里面课程对应的章节数量
         const chapter = await Chapter.create(body);
+        await Course.increment('chaptersCount', {where:{id:chapter.courseId}});
         success(res, '创建章节成功', { chapter }, 201);
     } catch (error) {
         failure(res, error);
@@ -90,7 +92,9 @@ router.post('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const chapter = await getChapter(req)
+        // 删除章节，并减少章节数量
         await chapter.destroy()
+        await Course.decrement('chaptersCount', {where:{id:chapter.courseId}});
         success(res, '删除章节成功' );
     } catch (error) {
         failure(res, error);

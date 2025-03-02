@@ -23,33 +23,19 @@ const getCategory= async (req) => {
 router.get('/', async (req,res) => {
     try {
         const query = req.query;
-        // 当前是第几页
-        const currentPage = Math.abs(Number(query.currentPage)) || 1;
-        // 每页显示数据条数
-        const pageSize = Math.abs(Number(query.pageSize) )|| 10;
-        // 计算offset: 从哪一页开始查找 0 1 2...
-        const offset = (currentPage - 1) * pageSize;
+
         const condition = {
             order: [['rank', 'ASC'],['id', 'ASC']],
-            limit: pageSize,
-            offset
+            where: {}
         }
         if(query.name){
-            condition.where = {
-                name: {
+            condition.where.name = {
                     [Op.like]: `%${query.name}%`
-                }
             }
         }
-        const {count, rows} = await Category.findAndCountAll(condition);
-        success(res, '查询分类列表成功',
-            {
-                categories: rows,
-                pagination: {
-                    total: count,
-                    currentPage: currentPage,
-                    pageSize
-                }
+        const categories = await Category.findAll(condition);
+        success(res, '查询分类列表成功', {
+                categories
             }
         );
     } catch (error) {
