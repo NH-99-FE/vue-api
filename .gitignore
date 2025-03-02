@@ -1,0 +1,16 @@
+# ignore Node.js files
+/node_modules
+
+# ignore environment files
+/.env
+
+# ignore editor files
+/.idea
+/.vscode
+
+# ignore system files
+.DS_Store
+Thumbs.db
+
+# ignore Docker data
+/data
