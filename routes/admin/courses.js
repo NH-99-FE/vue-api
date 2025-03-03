@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Course,Category, User, Chapter } = require('../../models');
 const {Op} = require("sequelize");
-const { NotFoundError } = require('../../utils/errors');
+const { NotFound, Conflict } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
 
 // 公共方法：查找当前课程
@@ -13,7 +13,7 @@ const getCourse = async (req) => {
     // 查找对应课程
     const course = await Course.findByPk(id, condition);
     if (!course) {
-        throw new NotFoundError(`Course with id ${id} not found`);
+        throw new NotFound(`Course with id ${id} not found`);
     }
     return course;
 }
@@ -110,7 +110,7 @@ router.delete('/:id', async (req, res) => {
         const course = await getCourse(req)
         const count = await Chapter.count({where:{courseId:req.params.id}});
         if (count > 0) {
-            throw new Error('当前课程有章节，无法删除。')
+            throw new Conflict('当前课程有章节，无法删除。')
         }
         await course.destroy()
         success(res, '删除课程成功' );

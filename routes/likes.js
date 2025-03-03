@@ -1,7 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const {Course, Like, User} = require('../models');
-const { NotFoundError } = require('../utils/errors');
+const { NotFound } = require('http-errors');
 const { success, failure } = require('../utils/responses');
 
 /**
@@ -15,7 +15,7 @@ router.post ('/', async (req, res) => {
 
         const course = await Course.findByPk(courseId);
         if (!course) {
-            throw new NotFoundError('课程不存在。');
+            throw new NotFound('课程不存在。');
         }
         // 检查课程之前是否已经点赞
         const like = await Like.findOne({

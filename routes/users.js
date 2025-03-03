@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { User } = require('../models');
 const {Op} = require("sequelize");
-const { BadRequestError } = require('../utils/errors');
+const { BadRequest } = require('http-errors');
 const { success, failure } = require('../utils/responses');
 const bcrypt = require('bcryptjs');
 
@@ -20,7 +20,7 @@ const getUser = async (req, showPassword = false) => {
   // 查找对应用户
   const user = await User.findByPk(id, condition);
   if (!user) {
-    throw new NotFoundError(`User with id ${id} not found`);
+    throw new NotFound(`User with id ${id} not found`);
   }
   return user;
 }
@@ -78,10 +78,10 @@ router.put('/account', async (req, res) => {
       passwordConfirmation: req.body.passwordConfirmation
     };
     if (!body.current_password) {
-      throw new BadRequestError(`当前密码必须填写。`);
+      throw new BadRequest(`当前密码必须填写。`);
     }
     if (body.password !== req.body.passwordConfirmation) {
-      throw new BadRequestError(`两次输入的密码不一致。`);
+      throw new BadRequest(`两次输入的密码不一致。`);
     }
     // 加上true参数，可以查询到加密后的密码
     const user = await getUser(req, true);
@@ -89,7 +89,7 @@ router.put('/account', async (req, res) => {
     // 验证当前密码是否正确
     const isPasswordValid = bcrypt.compareSync(body.current_password, user.password);
     if(!isPasswordValid) {
-      throw new BadRequestError('当前密码不正确。')
+      throw new BadRequest('当前密码不正确。')
     }
     await user.update(body);
     // 删除密码

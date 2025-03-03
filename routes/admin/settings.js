@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Setting } = require('../../models');
 const {Op} = require("sequelize");
-const { NotFoundError } = require('../../utils/errors');
+const { NotFound } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
 
 // 公共方法：查找当前系统设置
@@ -11,7 +11,7 @@ const getSetting = async ( )=> {
     // 查找系统设置(第一条）
     const setting = await Setting.findOne();
     if (!setting) {
-        throw new NotFoundError(`Setting not found`);
+        throw new NotFound(`Setting not found`);
     }
     return setting;
 }

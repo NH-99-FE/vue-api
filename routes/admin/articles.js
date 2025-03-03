@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Article } = require('../../models');
 const {Op} = require("sequelize");
-const { NotFoundError } = require('../../utils/errors');
+const { NotFound } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
 
 // 公共方法：查找当前文章
@@ -12,7 +12,7 @@ const getArticle = async (req) => {
     // 查找对应文章
     const article = await Article.findByPk(id);
     if (!article) {
-        throw new NotFoundError(`Article with id ${id} not found`);
+        throw new NotFound(`Article with id ${id} not found`);
     }
     return article;
 }

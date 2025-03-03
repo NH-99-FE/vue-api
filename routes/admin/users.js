@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { User } = require('../../models');
 const {Op} = require("sequelize");
-const { NotFoundError } = require('../../utils/errors');
+const { NotFound } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
 
 // 公共方法：查找当前用户
@@ -12,7 +12,7 @@ const getUser = async (req) => {
     // 查找对应用户
     const user = await User.findByPk(id);
     if (!user) {
-        throw new NotFoundError(`User with id ${id} not found`);
+        throw new NotFound(`User with id ${id} not found`);
     }
     return user;
 }

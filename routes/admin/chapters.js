@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { Chapter,Course } = require('../../models');
 const {Op} = require("sequelize");
-const { NotFoundError } = require('../../utils/errors');
+const { NotFound, BadRequest } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
 
 // 公共方法：查找当前章节
@@ -13,7 +13,7 @@ const getChapter = async (req) => {
     // 查找对应章节
     const chapter = await Chapter.findByPk(id, condition);
     if (!chapter) {
-        throw new NotFoundError(`Chapter with id ${id} not found`);
+        throw new NotFound(`Chapter with id ${id} not found`);
     }
     return chapter;
 }
@@ -31,7 +31,7 @@ router.get('/', async (req,res) => {
         // 计算offset: 从哪一页开始查找 0 1 2...
         const offset = (currentPage - 1) * pageSize;
         if(!query.courseId){
-            throw new Error(`获取章节列表失败，课程ID不能为空。`);
+            throw new BadRequest(`获取章节列表失败，课程ID不能为空。`);
         }
         const condition = {
             ...getCondition(),
