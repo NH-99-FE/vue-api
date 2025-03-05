@@ -43,7 +43,7 @@ module.exports = (sequelize, DataTypes) => {
         notNull: {msg: '名称必须填写'},
         notEmpty: {msg: '名称不能为空'},
         len: {
-          args: [2.45],
+          args: [2,45],
           msg: '名称长度需要在2~45个字符之间'
         },
         async isUnique(value) {
@@ -77,7 +77,7 @@ module.exports = (sequelize, DataTypes) => {
         notNull: {msg: '昵称必须填写'},
         notEmpty: {msg: '昵称不能为空'},
         len: {
-          args: [2.45],
+          args: [2,45],
           msg: '名称长度需要在2~45个字符之间'
         }
       }

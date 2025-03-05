@@ -4,6 +4,7 @@ const { User } = require('../../models');
 const {Op} = require("sequelize");
 const { NotFound } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
+const { delKey } = require('../../utils/redis');
 
 // 公共方法：查找当前用户
 const getUser = async (req) => {
@@ -118,6 +119,7 @@ router.put('/:id', async (req, res) => {
         // 白名单过滤
         const body = filterBody(req);
         await user.update(body)
+        await clearCache(user);
         success(res, '更新用户成功', { user } );
     } catch (error) {
         failure(res, error);
@@ -140,5 +142,13 @@ const filterBody = (req) => {
         avatar: req.body.avatar,
     };
 }
+
+/**
+ * 清除缓存
+ */
+const clearCache = async (user) => {
+    await delKey(`user:${user.id}`);
+}
+
 
 module.exports = router;

@@ -4,6 +4,7 @@ const { Category, Course} = require('../../models');
 const {Op} = require("sequelize");
 const { NotFound, Conflict } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
+const { delKey} = require('../../utils/redis')
 
 // 公共方法：查找当前分类
 const getCategory= async (req) => {
@@ -60,6 +61,7 @@ router.post('/', async (req, res) => {
         // 白名单过滤
         const body = filterBody(req);
         const categories = await Category.create(body);
+        await clearCache();
         success(res, '创建分类成功', { categories }, 201);
     } catch (error) {
         failure(res, error);
@@ -69,12 +71,13 @@ router.post('/', async (req, res) => {
 // 删除分类
 router.delete('/:id', async (req, res) => {
     try {
-        const categories = await getCategory(req)
+        const category = await getCategory(req)
         const count = await Course.count({where:{categoryId:req.params.id}});
         if( count > 0 ) {
             throw new Conflict('当前分类有课程，无法删除');
         }
-        await categories.destroy()
+        await category.destroy()
+        await clearCache(category);
         success(res, '删除分类成功' );
     } catch (error) {
         failure(res, error);
@@ -84,12 +87,13 @@ router.delete('/:id', async (req, res) => {
 // 更新分类
 router.put('/:id', async (req, res) => {
     try {
-        const categories = await getCategory(req)
+        const category = await getCategory(req)
 
         // 白名单过滤
         const body = filterBody(req);
-        await categories.update(body)
-        success(res, '更新分类成功', { categories } );
+        await category.update(body)
+        await clearCache(category);
+        success(res, '更新分类成功', { category } );
     } catch (error) {
         failure(res, error);
     }
@@ -101,6 +105,18 @@ const filterBody = (req) => {
         name: req.body.name,
         rank: req.body.rank
     };
+}
+
+/**
+ * 清除缓存
+ */
+
+const clearCache = async (category = null) => {
+    await delKey('categories');
+
+    if (category) {
+        await delKey(`category:${category.id}`);
+    }
 }
 
 module.exports = router;

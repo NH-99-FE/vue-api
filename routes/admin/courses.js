@@ -4,6 +4,7 @@ const { Course,Category, User, Chapter } = require('../../models');
 const {Op} = require("sequelize");
 const { NotFound, Conflict } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
+const { getKeysByPattern, delKey } = require('../../utils/redis');
 
 // 公共方法：查找当前课程
 const getCourse = async (req) => {
@@ -98,6 +99,7 @@ router.post('/', async (req, res) => {
         // 获取当前登录用户的id
         body.userId = req.user.id;
         const course = await Course.create(body);
+        await clearCache();
         success(res, '创建课程成功', { course }, 201);
     } catch (error) {
         failure(res, error);
@@ -113,6 +115,7 @@ router.delete('/:id', async (req, res) => {
             throw new Conflict('当前课程有章节，无法删除。')
         }
         await course.destroy()
+        await clearCache(course)
         success(res, '删除课程成功' );
     } catch (error) {
         failure(res, error);
@@ -127,6 +130,7 @@ router.put('/:id', async (req, res) => {
         // 白名单过滤
         const body = filterBody(req);
         await course.update(body)
+        await clearCache(course);
         success(res, '更新课程成功', { course } );
     } catch (error) {
         failure(res, error);
@@ -165,5 +169,19 @@ const getCondition = () => {
         ]
     }
 }
+
+/**
+ * 清楚缓存
+ */
+const clearCache = async (course = null) => {
+    let keys = await getKeysByPattern('courses:*');
+    if (keys.length !== 0) {
+        await delKey(keys)
+    }
+    if (course) {
+        await delKey(`course:${course.id}`);
+    }
+}
+
 
 module.exports = router;

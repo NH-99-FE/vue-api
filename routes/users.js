@@ -5,6 +5,7 @@ const {Op} = require("sequelize");
 const { BadRequest } = require('http-errors');
 const { success, failure } = require('../utils/responses');
 const bcrypt = require('bcryptjs');
+const { setKey, getKey, delKey } = require('../utils/redis');
 
 
 // 公共方法：查找当前用户
@@ -32,7 +33,11 @@ const getUser = async (req, showPassword = false) => {
 
 router.get('/me', async (req, res) => {
   try {
-    const user = await getUser(req)
+    let user = await getKey(`user:${req.userId}`);
+    if (!user) {
+      user = await getUser(req)
+      await setKey(`user:${req.userId}`, user);
+    }
     success(res,'查询用户成功', { user } );
   } catch (error) {
     failure(res, error);
@@ -58,6 +63,7 @@ router.put('/info', async (req, res) => {
     const user = await getUser(req)
 
     await user.update(body)
+    await clearCache(user);
     success(res, '更新用户成功', { user } );
   } catch (error) {
     failure(res, error);
@@ -94,11 +100,19 @@ router.put('/account', async (req, res) => {
     await user.update(body);
     // 删除密码
     delete user.dataValues.password;
+    await clearCache(user);
+
     success(res, '更新账户信息成功', { user } );
   } catch (error) {
     failure(res, error);
   }
 })
 
+/**
+ * 清除缓存
+ */
+const clearCache = async (user) => {
+  await delKey(`user:${user.id}`);
+}
 
 module.exports = router;

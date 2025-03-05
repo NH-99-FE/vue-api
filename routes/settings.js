@@ -3,6 +3,7 @@ const router = express.Router();
 const { Setting } = require('../models');
 const { success, failure } = require('../utils/responses');
 const { NotFound } = require('http-errors');
+const { setKey, getKey} = require('../utils/redis');
 
 /**
  * 查询系统设置
@@ -10,9 +11,20 @@ const { NotFound } = require('http-errors');
  */
 router.get('/', async (req, res) => {
     try {
-        const setting = await Setting.findOne();
-        if (!setting) {
-            throw new NotFound('未找到系统设置，请联系管理员。');
+        // 缓存的 key，定义为：setting
+        const cacheKey = 'setting';
+
+        // 读取缓存中的数据
+        let setting = await getKey(cacheKey);
+
+        // 如果缓存中没有数据，则从数据库中读取数据
+        if(!setting){
+            setting = await Setting.findOne();
+            if (!setting) {
+                throw new NotFound('未找到系统设置，请联系管理员。');
+            }
+            // 并将数据写入缓存
+            await setKey(cacheKey, setting);
         }
         success(res, '查询系统信息成功。', { setting });
     } catch (error) {

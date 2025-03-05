@@ -44,9 +44,13 @@ module.exports = (sequelize, DataTypes) => {
       get() {
         return moment(this.getDataValue('updatedAt')).format("lll");
       }
+    },
+    deletedAt: {
+      type: DataTypes.DATE
     }
   }, {
     sequelize,
+    paranoid: true, // 启用软删除
     modelName: 'Article',
   });
   return Article;

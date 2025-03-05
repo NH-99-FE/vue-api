@@ -6,13 +6,16 @@ const { NotFound, Unauthorized } = require('http-errors');
 const {Op} = require("sequelize");
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
+const validateCaptcha = require('../middlewares/validate-captcha');
+const {delKey} = require("../utils/redis");
+const sendMail = require('../utils/mail');
 
 
 /**
  * 用户注册
  * POST /auth/sign_up
  */
-router.post('/sign_up', async (req, res) => {
+router.post('/sign_up',validateCaptcha,  async (req, res) => {
     try {
         const body = {
             email: req.body.email,
@@ -24,6 +27,16 @@ router.post('/sign_up', async (req, res) => {
         }
         const user = await User.create(body)
         delete user.dataValues.password // 删除密码
+
+        // 请求成功，删除验证码，防止重复使用
+        await delKey(req.body.captchaKey)
+
+        // 发送邮件
+        const html= `
+            您好，<span style="color: red">${user.nickname}。</span><br><br>恭喜，您已成功注册会员!`
+
+        await sendMail(user.email,'注册成功通知', html)
+
         success(res, '创建用户成功',{ user }, 201)
     } catch(error) {
         failure(res, error);

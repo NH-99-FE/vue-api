@@ -4,6 +4,7 @@ const { Article } = require('../../models');
 const {Op} = require("sequelize");
 const { NotFound } = require('http-errors');
 const { success, failure } = require('../../utils/responses');
+const { getKeysByPattern, delKey} = require('../../utils/redis');
 
 // 公共方法：查找当前文章
 const getArticle = async (req) => {
@@ -35,6 +36,14 @@ router.get('/', async (req,res) => {
             offset,
             where: {}
         }
+        // 查询被软删除的数据
+        if (query.deleted === 'true') {
+            condition.paranoid = false;
+            condition.where.deletedAt = {
+                [Op.not]: null
+            }
+        }
+
         if(query.title){
             condition.where.title = {
                     [Op.like]: `%${query.title}%`
@@ -56,7 +65,10 @@ router.get('/', async (req,res) => {
     }
 })
 
-
+/**
+ * 查询文章详情
+ * GET /admin/articles/:id
+ */
 router.get('/:id', async (req, res) => {
     try {
         const article = await getArticle(req)
@@ -78,17 +90,54 @@ router.post('/', async (req, res) => {
         failure(res, error);
     }
 })
-
-// 删除文章
-router.delete('/:id', async (req, res) => {
+/**
+ * 删除到回收站
+ * POST /admin/articles/delete
+ */
+router.post('/delete', async (req, res) => {
     try {
-        const article = await getArticle(req)
-        await article.destroy()
-        success(res, '删除文章成功' );
+        const { id } = req.body;
+        await Article.destroy({where:{id}});
+        await clearCache(id);
+
+        success(res, '已删除到回收站')
     } catch (error) {
         failure(res, error);
     }
 })
+
+/**
+ * 从回收站恢复
+ * POST /admin/articles/restore
+ */
+router.post('/restore', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await Article.restore({where:{id}});
+        await clearCache(id);
+        success(res, '已恢复成功')
+    } catch (error) {
+        failure(res, error);
+    }
+})
+
+/**
+ * 彻底删除
+ * POST /admin/articles/force_delete
+ */
+router.post('/force_delete', async (req, res) => {
+    try {
+        const { id } = req.body;
+        await Article.destroy({
+            where:{ id },
+            force: true
+        });
+        success(res, '已彻底删除。')
+    } catch (error) {
+        failure(res, error);
+    }
+})
+
 
 // 更新文章
 router.put('/:id', async (req, res) => {
@@ -97,7 +146,8 @@ router.put('/:id', async (req, res) => {
 
         // 白名单过滤
         const body = filterBody(req);
-        await article.update(body)
+        await article.update(body);
+        await clearCache(article.id);
         success(res, '更新文章成功', { article } );
     } catch (error) {
         failure(res, error);
@@ -110,6 +160,23 @@ const filterBody = (req) => {
         title: req.body.title,
         content: req.body.content
     };
+}
+
+/**
+ * 清除缓存
+ */
+const clearCache = async (id = null) => {
+    // 清除所有文章缓存
+    const keys = await getKeysByPattern('articles:*');
+    if ( keys.length !== 0 ) {
+        await delKey(keys);
+    }
+    // 如果传递了id, 则通过id清除文章详情缓存
+    if (id) {
+        // 如果id是数组，则遍历
+        const keys = Array.isArray(id) ? id.map(item => `article:${item}`) : `article:${id}`;
+        await delKey(keys);
+    }
 }
 
 module.exports = router;

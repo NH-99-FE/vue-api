@@ -20,6 +20,8 @@ const searchRouter = require('./routes/search');
 const authRouter = require('./routes/auth');
 const userRouter = require('./routes/users');
 const likeRouter = require('./routes/likes');
+// const uploadRouter = require('./routes/uploads');
+const captchaRouter = require('./routes/captcha');
 
 // 后台路由文件
 const adminArticlesRouter = require('./routes/admin/articles');
@@ -53,7 +55,7 @@ app.use(cors());
 
 // 前台路由配置
 app.use('/', indexRouter);
-app.use('/category', categoryRouter);
+app.use('/categories', categoryRouter);
 app.use('/courses', courseRouter);
 app.use('/chapters', chapterRouter);
 app.use('/articles', articleRouter);
@@ -62,21 +64,20 @@ app.use('/search', searchRouter);
 app.use('/auth', authRouter);
 app.use('/users', userAuth, userRouter);
 app.use('/likes', userAuth, likeRouter);
+// app.use('/uploads', userAuth, uploadRouter);
+app.use('/captcha', captchaRouter);
+
 
 // 后台路由配置
-// 先注册不需要认证的路由
-app.use('/admin/auth', adminAuthRouter); // 登录相关的路由不需要认证
 
-// 其他需要认证的路由
-app.use('/', adminAuth, indexRouter);
-app.use('/users', adminAuth, usersRouter);
 app.use('/admin/articles', adminAuth, adminArticlesRouter);
 app.use('/admin/categories', adminAuth, adminCategoriesRouter);
 app.use('/admin/settings', adminAuth,  adminSettingsRouter);
 app.use('/admin/users', adminAuth, adminUsersRouter);
 app.use('/admin/courses', adminAuth, adminCoursesRouter);
 app.use('/admin/chapters', adminAuth, adminChaptersRouter);
-app.use('/admin/charts', adminAuth, adminChartsRouter)
+app.use('/admin/charts', adminAuth, adminChartsRouter);
+app.use('/admin/auth', adminAuthRouter); // 登录相关的路由不需要认证
 
 
 module.exports = app;

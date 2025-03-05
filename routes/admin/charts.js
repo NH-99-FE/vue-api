@@ -8,9 +8,11 @@ const { success, failure } = require('../../utils/responses');
 // 统计用户性别
 router.get('/sex', async (req, res) => {
     try {
-        const male = await User.count({where: {sex:0}})
-        const female = await User.count({where: {sex:1}})
-        const unknown = await User.count({where: {sex:2}})
+        const [ male, female, unknown ] = await Promise.all([
+            User.count({where: {sex:0}}),
+            User.count({where: {sex:1}}),
+            User.count({where: {sex:2}})
+        ])
 
         const data = [
             {value: male, name: '男性'},
